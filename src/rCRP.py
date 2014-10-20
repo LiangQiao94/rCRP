@@ -17,7 +17,7 @@ an example is in /corpus/nips_5_0.2/nips.txt
 where 5 = no_below and 0.2 = no_above
 '''
 
-import re, gensim, pickle, logging, random, time, math, os
+import re, gensim, pickle, logging, random, time, math, os, bisect
 import numpy as np
 from copy import copy
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
@@ -64,7 +64,6 @@ class Model:
 		self.no_above = no_above
 		self.depth_limit = depth_limit
 		self.param = data_type + '_' + str(alpha) + '_' + str(beta) + '_' + str(gamma1) + '_' + str(gamma2) + '_' + str(delta) + '_' + str(depth_limit)
-
 
 	def load_data(self):
 		self.dictionary = gensim.corpora.dictionary.Dictionary.load(utils_dir + self.data_type + '_' + str(self.no_below) + '_' + str(self.no_above) + '.dic')
@@ -117,13 +116,8 @@ class Model:
 	def choose(self, roulette):
 		total = sum(roulette)
 		arrow = total * random.random()
-		for i in range(len(roulette)):
-			if arrow < roulette[i]:
-				return i
-			arrow -= roulette[i]
-		print 'error in choose'
-		print roulette
-		return -1
+		roulette = np.cumsum(roulette)
+		return bisect.bisect(np.cumsum(roulette), arrow)
 		
 	def print_topic(self, topic):
 		string = ''
@@ -297,9 +291,9 @@ class Model:
 		# in some extreme case, if there are too many words in one table
 		# we can have float overflow error, so for now we just limit the words in one table
 		# that we use in sampling by this number. normally we don't have case where
-		# words exceed 100 in one table, so it doesn't matter.
+		# words exceed 75 in one table, so it doesn't matter.
 		# but still we should fix this later.
-		word_limit = 100
+		word_limit = 75
 
 		parent_topic = self.root_topic ## root_topic
 		for i in range(1, self.depth_limit):
