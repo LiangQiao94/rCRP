@@ -297,7 +297,7 @@ class Model:
 
 		parent_topic = self.root_topic ## root_topic
 		for i in range(1, self.depth_limit):
-			topics = self.topics[i]
+			topics = parent_topic.children
 			roulette = np.zeros((len(topics) + 2))
 			for j in range(len(topics)):
 				topic = topics[j]
